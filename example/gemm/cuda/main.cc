@@ -9,7 +9,16 @@
         printf ("%s %d CUDA: %s\n", __FILE__,  __LINE__, cudaGetErrorString(e));		\
 }
 
-int main() {
+void printMatrix(float* matrix, int M, int N) {
+    for(int i = 0; i < M; i++) {
+        for(int j = 0; j < N; j++) {
+            printf("%f ", matrix[i * M + j]);
+        }
+        printf("\n");
+    }
+}
+
+int main(int argc, char** argv) {
     if (argc != 4) {
         printf("usage: ./main [M] [K] [N]\n");
         exit(0);
@@ -37,11 +46,11 @@ int main() {
     checkCudaErrors(cudaMalloc(&d_C, bytes_C));
 
     for(int i = 0; i < M * K; i++) {
-        h_A = i / 13;
+        h_A[i] = i;
     }
 
     for(int i = 0; i < K * N; i++) {
-        h_B = i / 13;
+        h_B[i] = i;
     }
 
     checkCudaErrors(cudaMemcpy(d_A, h_A, bytes_A, cudaMemcpyHostToDevice));
@@ -49,7 +58,11 @@ int main() {
 
     gemm(d_A, d_B, d_C, N, M, K);
 
-    checkCudaErrors(cudaMemcpy(h_C, d_C, bytes_Cm cudaMemcpyDeviceToHost));
+    checkCudaErrors(cudaMemcpy(h_C, d_C, bytes_C, cudaMemcpyDeviceToHost));
+
+    printMatrix(h_A, M, K);
+    printMatrix(h_B, K, N);
+    printMatrix(h_C, M, N);
 
     return 0;
 }

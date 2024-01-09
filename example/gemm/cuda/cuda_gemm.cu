@@ -2,9 +2,9 @@
 
 __global__ void gemm_native(float *a, float *b, float *c, int N, int M, int K){
     int tx = blockIdx.x * blockDim.x + threadIdx.x;
-    int ty = blockIdx.y * blockDim.y + threadIdx.x;
+    int ty = blockIdx.y * blockDim.y + threadIdx.y;
 
-    if(tx > M || ty > N)
+    if(tx >= M || ty >= N)
         return;
 
     for(int i = 0; i < K; i++) {
@@ -13,5 +13,7 @@ __global__ void gemm_native(float *a, float *b, float *c, int N, int M, int K){
 }
 
 void gemm(float *a, float *b, float *c, int N, int M, int K){
-    gemm_native(a, b, c,  N, M, K);
+    dim3 grid(1, 1);
+    dim3 block(1, 4);
+    gemm_native<<<grid, block>>>(a, b, c, N, M, K);
 }
