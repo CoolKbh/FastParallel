@@ -12,7 +12,7 @@
 void printMatrix(float* matrix, int M, int N) {
     for(int i = 0; i < M; i++) {
         for(int j = 0; j < N; j++) {
-            printf("%f ", matrix[i * M + j]);
+            printf("%f ", matrix[i * N + j]);
         }
         printf("\n");
     }
@@ -50,7 +50,7 @@ int main(int argc, char** argv) {
     }
 
     for(int i = 0; i < K * N; i++) {
-        h_B[i] = i;
+        h_B[i] = i + 1;
     }
 
     checkCudaErrors(cudaMemcpy(d_A, h_A, bytes_A, cudaMemcpyHostToDevice));
