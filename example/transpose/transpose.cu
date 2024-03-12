@@ -4,7 +4,7 @@ int upScale(int x, int y) {
     return (x + y - 1) / y;
 }
 
-__global__ void gemm_native(float *a, float *b, float *c, int N, int M, int K){
+__global__ void transpose_native(float *a, float *b, float *c, int N, int M, int K){
     int tx = blockIdx.x * blockDim.x + threadIdx.x;
     int ty = blockIdx.y * blockDim.y + threadIdx.y;
 
@@ -19,57 +19,7 @@ __global__ void gemm_native(float *a, float *b, float *c, int N, int M, int K){
     c[ty * N + tx] = c_temp;
 }
 
-__global__ void gemm_kernel_1(float *a, float *b, float *c, int N, int M, int K){
-    int tx = blockIdx.x * blockDim.x + (threadIdx.x / 32);
-    int ty = blockIdx.y * blockDim.x + (threadIdx.x % 32);
-
-    if(tx >= M || ty >= N)
-        return;
-
-    int c_temp = 0;
-    for(int i = 0; i < K; i++) {
-        // c[tx * N + ty] += a[tx * K + i] * b[i * N + ty];
-        c_temp += a[ty * K + i] * b[i * N + tx];  //结果一致
-    }
-    c[ty * N + tx] = c_temp;
-}
-
-// shared memory 
-__global__ void gemm_kernel_2(float *a, float *b, float *c, int N, int M, int K){
-    int tx = blockIdx.x * blockDim.x + threadIdx.x;
-    int ty = blockIdx.y * blockDim.y + threadIdx.y;
-
-    // if(tx >= N || ty >= M)
-    //     return;
-
-    // shared memory
-    __shared__ float As[32][32];
-    __shared__ float Bs[32][32];
-
-    int Ks = 32;
-    float c_temp = 0;
-
-    for(int i = 0; i < K / Ks; ++i) {
-        As[threadIdx.y][threadIdx.x] = a[ty * K + i * Ks + threadIdx.x];
-        Bs[threadIdx.y][threadIdx.x] = b[i * Ks * N + tx + threadIdx.y * N];
-        __syncthreads();
-
-        for(int j = 0; j < Ks; ++j) {
-            c_temp += As[threadIdx.y][j] * Bs[j][threadIdx.x]; 
-        }
-        __syncthreads();  
-    }
-    c[ty * N + tx] = c_temp;
-}
-
-inline void run_gemm_native(float *a, float *b, float *c, int N, int M, int K) {
-    dim3 dimGrid(upScale(M, 32), upScale(N, 32));
-    dim3 dimBlock(32, 32);
-
-    gemm_native<<<dimGrid, dimBlock>>>(a, b, c, N, M, K);
-}
-
-void gemm(float *a, float *b, float *c, int N, int M, int K){
+void transpose(float *a, float *b, float *c, int N, int M, int K){
     const int BLOCK_SIZE_M = 128;
     const int BLOCK_SIZE_K = 8;
     const int BLOCK_SIZE_N = 128;

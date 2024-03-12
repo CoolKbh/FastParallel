@@ -66,62 +66,62 @@ int main(int argc, char** argv) {
 
     // cublas
 
-    double msecPerMatrixMul[2] = {0, 0};
-    double gigaFlops[2] = {0, 0};
-    double flopsPerMatrixMul = 2.0 * M * N * K;
+    // double msecPerMatrixMul[2] = {0, 0};
+    // double gigaFlops[2] = {0, 0};
+    // double flopsPerMatrixMul = 2.0 * M * N * K;
 
-    int nIter = 1000;
-    float msecTotal = 0;
-    cudaEvent_t start, stop;
-    checkCudaErrors(cudaEventCreate(&start));
-    checkCudaErrors(cudaEventCreate(&stop));
+    // int nIter = 1000;
+    // float msecTotal = 0;
+    // cudaEvent_t start, stop;
+    // checkCudaErrors(cudaEventCreate(&start));
+    // checkCudaErrors(cudaEventCreate(&stop));
 
-    cublasHandle_t blas_handle;  
-    cublasCreate(&blas_handle);
-    float alpha = 1.0;
-    float beta = 0;
-    checkCudaErrors(cudaMemcpy( d_C, h_C, bytes_C, cudaMemcpyHostToDevice));
-    checkCudaErrors(cudaEventRecord(start));
-    for (int run = 0 ; run < nIter; run ++ ) {
-        cublasSgemm (blas_handle, CUBLAS_OP_T, CUBLAS_OP_T, 
-            M, N, K, &alpha, 
-            d_A, K, d_B, N, &beta, d_C, N
-        );
-    }
-    checkCudaErrors(cudaEventRecord(stop));
-    checkCudaErrors(cudaEventSynchronize(stop));
-    checkCudaErrors(cudaEventElapsedTime(&msecTotal, start, stop));
+    // cublasHandle_t blas_handle;  
+    // cublasCreate(&blas_handle);
+    // float alpha = 1.0;
+    // float beta = 0;
+    // checkCudaErrors(cudaMemcpy( d_C, h_C, bytes_C, cudaMemcpyHostToDevice));
+    // checkCudaErrors(cudaEventRecord(start));
+    // for (int run = 0 ; run < nIter; run ++ ) {
+    //     cublasSgemm (blas_handle, CUBLAS_OP_T, CUBLAS_OP_T, 
+    //         M, N, K, &alpha, 
+    //         d_A, K, d_B, N, &beta, d_C, N
+    //     );
+    // }
+    // checkCudaErrors(cudaEventRecord(stop));
+    // checkCudaErrors(cudaEventSynchronize(stop));
+    // checkCudaErrors(cudaEventElapsedTime(&msecTotal, start, stop));
 
-    checkCudaErrors(cudaMemcpy( h_C_cublas, d_C, bytes_C, cudaMemcpyDeviceToHost));
+    // checkCudaErrors(cudaMemcpy( h_C_cublas, d_C, bytes_C, cudaMemcpyDeviceToHost));
 
-    msecPerMatrixMul[1] = msecTotal / nIter;
-    gigaFlops[1] = (flopsPerMatrixMul * 1.0e-9f) / (msecPerMatrixMul[1] / 1000.0f);
-    printf( "CuBlas Performance= %.2f GFlop/s, Time= %.3f msec, Size= %.0f Ops,\n",
-        gigaFlops[1],
-        msecPerMatrixMul[1],
-        flopsPerMatrixMul);
+    // msecPerMatrixMul[1] = msecTotal / nIter;
+    // gigaFlops[1] = (flopsPerMatrixMul * 1.0e-9f) / (msecPerMatrixMul[1] / 1000.0f);
+    // printf( "CuBlas Performance= %.2f GFlop/s, Time= %.3f msec, Size= %.0f Ops,\n",
+    //     gigaFlops[1],
+    //     msecPerMatrixMul[1],
+    //     flopsPerMatrixMul);
 
-    cublasDestroy(blas_handle); 
+    // cublasDestroy(blas_handle); 
     
-    double eps = 1.e-6;  // machine zero
-    bool correct = true;
-    for (int i = 0; i < M * N; i++) {
-        int row = i / N;
-        int col = i % N;
-        double abs_err = fabs(h_C[i] - h_C_cublas[col * M + row]);
-        double dot_length = M;
-        double abs_val = fabs(h_C[i]);
-        double rel_err = abs_err / abs_val / dot_length;
-        if (rel_err > eps) {
-            printf("Error! Matrix[%05d]=%.8f, ref=%.8f error term is > %E\n",
-                    i, h_C[i], h_C_cublas[col * M + row], eps);
-            correct = false;
-            break;
-        }
-    }
+    // double eps = 1.e-6;  // machine zero
+    // bool correct = true;
+    // for (int i = 0; i < M * N; i++) {
+    //     int row = i / N;
+    //     int col = i % N;
+    //     double abs_err = fabs(h_C[i] - h_C_cublas[col * M + row]);
+    //     double dot_length = M;
+    //     double abs_val = fabs(h_C[i]);
+    //     double rel_err = abs_err / abs_val / dot_length;
+    //     if (rel_err > eps) {
+    //         printf("Error! Matrix[%05d]=%.8f, ref=%.8f error term is > %E\n",
+    //                 i, h_C[i], h_C_cublas[col * M + row], eps);
+    //         correct = false;
+    //         break;
+    //     }
+    // }
 
-    printf("%s\n", correct ? "Result= PASS" : "Result= FAIL");
-    printf("ratio= %f\n", gigaFlops[0] / gigaFlops[1]);
+    // printf("%s\n", correct ? "Result= PASS" : "Result= FAIL");
+    // printf("ratio= %f\n", gigaFlops[0] / gigaFlops[1]);
 
     return 0;
 }
